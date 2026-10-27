@@ -160,6 +160,7 @@ Producers SHOULD list attributes in the order they want them shown. Clients MAY 
 | absent | string | A categorical trait, such as `"Blue"`. |
 | absent | number | A numeric trait. Clients MAY show it as a bar or ranking relative to `max_value`. |
 | `string` | string | A categorical trait, the same as omitting `display_type`. |
+| `text` | string | The same as `string`. Deployed documents use both names, so clients MUST accept `text`. Producers SHOULD write `string`. |
 | `number` | number | A numeric stat, shown as a number. |
 | `boost_number` | number | A numeric bonus, shown with its sign, such as `+40`. |
 | `boost_percentage` | number | A percentage bonus, shown with its sign and a percent sign. `10` means `+10%`. |
@@ -192,7 +193,7 @@ Clients MAY accept the following forms, which appear in deployed documents but d
 - An attributes array named `traits` or `properties` instead of `attributes`.
 - An image URI in a field named `image_url` instead of `image`.
 - `ipfs://ipfs/<cid>` URIs, which clients can read as `ipfs://<cid>`.
-- `date` values written in milliseconds. A value of `100000000000` or more is after the year 5000 when read as seconds, so clients MAY read such values as milliseconds.
+- `date` values written in milliseconds. A value of `1000000000000` or more is after the year 33000 when read as seconds and after September 2001 when read as milliseconds, so clients MAY read such values as milliseconds. Smaller values are seconds, including `253402300800`, the start of the year 10000, which some contracts write to mean a date that never arrives.
 
 ### Extensions
 
@@ -355,6 +356,16 @@ An array of objects lets a trait repeat, keeps the producer's order, and carries
 
 Unix time in seconds matches `block.timestamp`, so contracts that build metadata onchain can write dates without converting them.
 
+Some deployed documents write dates in milliseconds, and some write `253402300800`, the start of the year 10000 in seconds, to mean a date that never arrives. A cutoff of `1000000000000` separates the two. Every millisecond date after September 2001 is above it, and no date in seconds reaches it before the year 33000. A lower cutoff of `100000000000` would read the year-10000 value as a date in 1978.
+
+### `ipfs` URIs instead of gateway URLs
+
+A gateway URL ties a document to one operator's server. In a sample of token URIs from 708 Ethereum and Base contracts taken in October 2026, 113 of the 204 written as IPFS gateway URLs failed to load as written, and every sampled token failed for 18 of the 30 contracts that used them. Several public gateways now serve only browsers, or answer automated requests with a bot challenge. An `ipfs` URI names the content rather than a server, so a client can fetch it through any gateway or node that has it.
+
+### `text` as a display type
+
+`text` is not in the format OpenSea documented, but more deployed collections in the same sample use `display_type: "text"` than `"string"`. Clients that treat unknown display types as absent already show these traits as strings. Listing `text` as another name for `string` makes that behavior explicit.
+
 ### Extensions as top-level fields
 
 Clients already detect optional data by checking whether a field is present. An extension that owns one top-level object fits that pattern. There is no version number to coordinate and no registry to consult, and a client can implement one extension without the others. Two alternatives were considered:
@@ -410,6 +421,9 @@ For an ERC-1155 token with ID `314592` and metadata URI `ipfs://bafybeigdyrzt5sf
 | `{"trait_type": "Level", "value": "5"}` | String trait `Level` with value `5`. |
 | `{"display_type": "boost_percentage", "trait_type": "Stamina Increase", "value": 10}` | Numeric trait shown as `+10%`. |
 | `{"display_type": "date", "trait_type": "Birthday", "value": 1546360800}` | Date trait with value `2019-01-01T16:40:00Z`. |
+| `{"display_type": "text", "trait_type": "Faction", "value": "Red"}` | String trait `Faction` with value `Red`. |
+| `{"display_type": "date", "trait_type": "Registered", "value": 1694173211000}` | Date trait with value `2023-09-08T11:40:11Z` for clients that read large values as milliseconds. |
+| `{"display_type": "date", "trait_type": "Expires", "value": 253402300800}` | Date trait with value `10000-01-01T00:00:00Z`. |
 | `{"display_type": "sparkle", "trait_type": "Mood", "value": "Calm"}` | `sparkle` is unknown, so this is string trait `Mood` with value `Calm`. |
 | `{"trait_type": "Mood", "value": null}` | Ignored. |
 | `{"trait_type": "Hat", "value": ["Cap"]}` | Ignored. |

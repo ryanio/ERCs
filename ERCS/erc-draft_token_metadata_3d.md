@@ -222,6 +222,10 @@ A media type cannot tell a VRM avatar from a plain glTF binary, since both are `
 
 Clients that render 3D models from `animation_url` today accept glTF, and the Token Metadata JSON Schema lists it among the formats for that field. A `glb` file is a single file in an open, royalty-free format that browsers load through widely used libraries. Pointing `animation_url` at the first `glb` entry means clients with and without this proposal show the same model.
 
+### Deployed 3D fields
+
+A survey of token metadata from 708 Ethereum and Base contracts in October 2026 found that few documents describe 3D files, and those that do each use a field of their own. Meebits publishes each token's VRM avatar in a top-level `vrm` field. Ten contracts publish a Metaverse Markup Language (MML) scene in a top-level `mml` field. One collection puts a glTF binary in `animation_url` and declares `"format": "GLB"` in an `animation_details` object. A client has to know each collection's field name to find these files, and no field says what other formats a token offers. `model_3d` gives these files one place, and its format tokens match the names these collections already use, so `vrm` and `glb` carry over directly and a scene format such as `mml` can be listed without a new proposal.
+
 ### What this proposal leaves out
 
 Viewer hints such as camera position, lighting, environment maps, and which animation clip to play; levels of detail; and license terms for using a model in another application are all useful. They differ by viewer and by use, and a later revision can add them as new fields in the `model_3d` object or in file entries, which clients of this version ignore.
