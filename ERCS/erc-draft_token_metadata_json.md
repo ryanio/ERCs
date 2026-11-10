@@ -12,17 +12,17 @@ requires: 721, 1155, 4804, 4906, 6909
 
 ## Abstract
 
-This proposal specifies the JSON document returned by `tokenURI` in [ERC-721](./eip-721.md) and [ERC-6909](./eip-6909.md) and by `uri` in [ERC-1155](./eip-1155.md): its display fields, its `attributes` array of traits, the URI schemes clients resolve, how clients treat malformed values, and how other proposals add fields. It formalizes the format most deployed tokens already use.
+This proposal specifies the JSON document that `tokenURI` ([ERC-721](./eip-721.md), [ERC-6909](./eip-6909.md)) and `uri` ([ERC-1155](./eip-1155.md)) resolve to. It covers the display fields, the `attributes` array of traits, which URI schemes clients resolve, how clients treat malformed values, and how other proposals add fields. It writes down the format most deployed tokens already use.
 
 ## Motivation
 
-ERC-721 defines `name`, `description`, and `image`, and ERC-1155 adds `decimals`, `properties`, and `localization`. Everything else wallets and marketplaces show, including video, HTML, and traits, comes from a format OpenSea documented in 2018 and never specified. Clients fill the gaps differently: boolean and quoted-number trait values, dates in seconds or milliseconds, which URI schemes to resolve, and how to isolate HTML.
+ERC-721 defines `name`, `description`, and `image`, and ERC-1155 adds `decimals`, `properties`, and `localization`. Everything else wallets and marketplaces show, including video, HTML, and traits, follows a format OpenSea documented in 2018 that was never specified. Clients fill the gaps differently: whether a trait value can be a boolean or a quoted number, whether dates are in seconds or milliseconds, which URI schemes to resolve, and how to isolate HTML.
 
-Proposals that add metadata fields, such as [ERC-5625](./eip-5625.md), have no base document to require and no rules for naming fields or for what older clients show. This proposal provides both.
+Proposals that add metadata fields, such as [ERC-5625](./eip-5625.md), have no base document to require and no rules for naming fields or for what older clients show. This proposal gives them both.
 
 ## Specification
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) and [RFC 8174](https://www.rfc-editor.org/rfc/rfc8174).
 
 A *metadata URI* is the string returned by `tokenURI(uint256)` in ERC-721 or ERC-6909, or by `uri(uint256)` in ERC-1155. A *metadata document* is the JSON object it resolves to. A *producer* publishes metadata documents, and a *client*, such as a wallet, marketplace, or indexer, reads them.
 
@@ -30,53 +30,49 @@ A *metadata URI* is the string returned by `tokenURI(uint256)` in ERC-721 or ERC
 
 These rules apply to the metadata URI and to every URI-valued field.
 
-Clients MUST resolve `https`, `ipfs`, `ar`, and `data` URIs. Clients MAY support other schemes, such as `ipns` or the `web3` scheme of [ERC-4804](./eip-4804.md). Clients MUST NOT resolve schemes that run code or read local resources, such as `javascript` or `file`.
+Clients MUST resolve `https`, `ipfs` (InterPlanetary File System), `ar` (Arweave), and `data` URIs. Clients MAY resolve other schemes, such as `ipns` or the `web3` scheme of [ERC-4804](./eip-4804.md), and MUST NOT resolve schemes that run code or read local resources, such as `javascript` or `file`.
 
-Producers MUST use absolute URIs, SHOULD use `ipfs`, `ar`, or `data` for content that is not meant to change, and SHOULD NOT use `http`. An `ipfs` URI MUST have the form `ipfs://<cid>` with an optional path, not `ipfs://ipfs/<cid>`. Producers SHOULD NOT use an IPFS gateway URL in place of an `ipfs` URI. Clients MAY fetch `ipfs` and `ar` content through any gateway.
+Producers MUST use absolute URIs, SHOULD use `ipfs`, `ar`, or `data` for content that is not meant to change, and SHOULD NOT use `http`. An `ipfs` URI MUST have the form `ipfs://<cid>`, where `<cid>` is a content identifier, with an optional path. Producers SHOULD NOT write an IPFS gateway URL in place of an `ipfs` URI. Clients MAY fetch `ipfs` and `ar` content through any gateway.
 
-A `data` URI ([RFC 2397](https://www.rfc-editor.org/rfc/rfc2397)) that carries a metadata document SHOULD use the `data:application/json;base64,` prefix. Clients MUST accept base64 payloads. Clients SHOULD also accept unencoded payloads, such as `data:application/json;utf8,{"name":"Example"}`, and SHOULD percent-decode one that does not parse as written.
+A `data` URI ([RFC 2397](https://www.rfc-editor.org/rfc/rfc2397)) that carries a metadata document SHOULD use the prefix `data:application/json;base64,`. Clients MUST accept base64 payloads. Clients SHOULD also accept unencoded payloads, such as `data:application/json;utf8,{"name":"Example"}`, and SHOULD percent-decode one that does not parse as written.
 
 For ERC-1155 tokens, clients MUST apply ERC-1155's `{id}` substitution to the metadata URI and to string values in the document.
 
 ### Fetching
 
-A metadata document MUST be a JSON object ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259)) encoded as UTF-8. Clients MUST treat any other top-level value as absent, and SHOULD parse a document as JSON whatever its `Content-Type`.
+A metadata document MUST be a JSON object ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259)) encoded as UTF-8. Clients MUST treat any other top-level value as absent, and SHOULD parse the body as JSON whatever its `Content-Type`. Servers SHOULD send an accurate `Content-Type` and `Access-Control-Allow-Origin: *`.
 
-Servers SHOULD send an accurate `Content-Type` and `Access-Control-Allow-Origin: *`.
-
-A client that fetches from its own servers, such as an indexer, MUST NOT connect to loopback, private, or link-local addresses, and MUST check the address each hostname resolves to and every redirect.
+A client that fetches from its own servers, such as an indexer, MUST NOT connect to loopback, private, or link-local addresses. It MUST apply this check to the address each hostname resolves to and to every redirect.
 
 ### Fields
 
-| Field | Type | Summary |
+| Field | Type | Meaning |
 | --- | --- | --- |
 | `name` | string | Name of the token. |
 | `description` | string | Description of the token. |
-| `image` | URI | Still image of the token. |
-| `animation_url` | URI | Video, audio, 3D model, or HTML page. |
+| `image` | URI | Still image, used in lists and previews. |
+| `animation_url` | URI | Video, audio, 3D model, or HTML page, shown in place of `image`. |
 | `external_url` | URI | Page about the token on the producer's site. |
 | `background_color` | string | Color behind the image. |
 | `attributes` | array | Traits of the token. |
 
 Every field is OPTIONAL. Producers SHOULD include `name` and `image`, and SHOULD omit a field rather than set it to `null` or an empty string.
 
-Clients MUST treat `null` and empty strings as absent, SHOULD ignore a field of the wrong type and read the rest of the document, and MUST ignore fields they do not recognize. Clients MAY truncate or drop values that exceed their own limits.
+Clients MUST treat `null` and empty strings as absent and MUST ignore fields they do not recognize. Clients SHOULD ignore a field of the wrong type and read the rest of the document, and MAY truncate or drop values that exceed their own limits.
 
-#### `name`
+#### `name` and `description`
 
-Plain text. Clients MUST NOT interpret Markdown or HTML in it.
+`name` is plain text. Clients MUST NOT interpret Markdown or HTML in it.
 
-#### `description`
-
-MAY contain CommonMark Markdown. Clients MUST NOT render raw HTML in it and SHOULD NOT load remote images it references.
+`description` MAY contain CommonMark Markdown. Clients MUST NOT render raw HTML in it and SHOULD NOT load remote images it references.
 
 #### `image`
 
-A still image, used in lists and previews and as the fallback for `animation_url`. Producers SHOULD use a format browsers display natively, such as PNG, JPEG, GIF, WebP, AVIF, or SVG. Clients MUST display SVG without running its scripts, for example in an image element or by rasterizing it.
+Producers SHOULD use a format browsers display natively, such as PNG, JPEG, GIF, WebP, AVIF, or SVG (Scalable Vector Graphics). Clients MUST display SVG without running its scripts, for example in an image element or by rasterizing it.
 
 #### `animation_url`
 
-A richer form of the token. Clients that can render it SHOULD show it in the token's detail view in place of `image`, MUST fall back to `image` when they cannot, and SHOULD show `image` as cover art for audio. Producers SHOULD use one of these media types:
+Clients that can render `animation_url` SHOULD show it in the token's detail view in place of `image`, MUST fall back to `image` when they cannot, and SHOULD show `image` as cover art for audio. Producers SHOULD use one of these media types:
 
 | Kind | Media types |
 | --- | --- |
@@ -94,26 +90,24 @@ A client that renders an HTML page:
 - SHOULD block popups and top-level navigation from it.
 - SHOULD resolve relative references against the page's own location.
 
-#### `external_url`
+#### `external_url` and `background_color`
 
-A page about the token on the producer's site. Producers SHOULD use `https`.
+Producers SHOULD use `https` for `external_url`.
 
-#### `background_color`
-
-Six hexadecimal digits without a leading `#`, such as `"E0F2FE"`, case-insensitive. Clients SHOULD ignore other formats, and MAY remove a leading `#` first.
+`background_color` is six hexadecimal digits without a leading `#`, such as `"E0F2FE"`, in either case. Clients SHOULD ignore other formats, and MAY remove a leading `#` first.
 
 #### `attributes`
 
 An array of trait objects:
 
-| Field | Type | Summary |
+| Field | Type | Meaning |
 | --- | --- | --- |
 | `trait_type` | string | Name of the trait. SHOULD be present. |
 | `value` | string or number | Value of the trait. REQUIRED. |
 | `display_type` | string | How clients present the value. |
 | `max_value` | number | Upper bound of a numeric value. |
 
-`value` MUST be a string or a number. `"5"` is a string trait and `5` is a numeric trait. Clients SHOULD ignore an attribute whose `value` is absent, `null`, an empty string, an object, or an array, and MAY read a boolean as the string `"true"` or `"false"`.
+`value` MUST be a string or a number, so `"5"` is a string trait and `5` is a numeric trait. Clients SHOULD ignore an attribute whose `value` is absent, `null`, an empty string, an object, or an array, and MAY read a boolean as the string `"true"` or `"false"`.
 
 A `trait_type` MAY repeat to give a trait several values, and clients SHOULD keep each value. Clients SHOULD compare trait types and string values exactly after trimming leading and trailing whitespace. Producers SHOULD list attributes in display order.
 
@@ -133,7 +127,7 @@ For `number`, `boost_number`, `boost_percentage`, and `date`, `value` MUST be a 
 
 `decimals`, `properties`, and `localization` have their ERC-1155 meaning for tokens of any standard. Producers SHOULD put traits in `attributes`, not `properties`.
 
-Clients MAY read two legacy fields, which producers SHOULD NOT use: `image_data`, raw SVG markup used when `image` is absent, and `youtube_url`, used when `animation_url` is absent.
+Clients MAY read two legacy fields that producers SHOULD NOT use: `image_data`, raw SVG markup used when `image` is absent, and `youtube_url`, used when `animation_url` is absent.
 
 #### Deployed forms
 
@@ -150,7 +144,7 @@ Clients MAY accept these forms, which producers MUST NOT use:
 An extension is a proposal that adds fields to the metadata document.
 
 1. An extension MUST list this proposal in `requires`.
-2. An extension MUST name every top-level field it defines, and SHOULD define one top-level field whose value is an object.
+2. An extension MUST name every top-level field it defines, and SHOULD define a single top-level field whose value is an object.
 3. Field names SHOULD use only lowercase ASCII letters, digits, and underscores, and SHOULD begin with a letter.
 4. An extension MUST NOT change the meaning or type of a field defined by this proposal or another extension. It MAY define new `display_type` values and new attribute fields.
 5. A document that uses an extension MUST still conform to this proposal. An extension SHOULD state which base fields producers fill as a fallback.
@@ -160,7 +154,7 @@ Producers MAY add fields that no proposal defines, and SHOULD name them so they 
 
 ### Metadata updates
 
-When a document changes, ERC-721 contracts SHOULD emit an [ERC-4906](./eip-4906.md) event and ERC-1155 contracts SHOULD emit `URI`. Clients that cache documents SHOULD refetch on these events and MAY refetch on their own schedule.
+When a document changes, ERC-721 contracts SHOULD emit an [ERC-4906](./eip-4906.md) event and ERC-1155 contracts SHOULD emit `URI`. Clients that cache documents SHOULD refetch on these events, and MAY refetch on their own schedule.
 
 ### JSON Schema
 
@@ -220,7 +214,7 @@ Where this schema differs from the text above, the text applies.
 ```json
 {
   "name": "Dave Starbelly",
-  "description": "Friendly OpenSea Creature that enjoys long swims in the ocean.",
+  "description": "A friendly sea creature that enjoys long swims in the ocean.",
   "image": "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi/3.png",
   "animation_url": "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi/3.glb",
   "external_url": "https://example.com/creatures/3",
@@ -240,17 +234,18 @@ Figures below come from a survey of metadata from 708 Ethereum and Base contract
 
 - Field names stay as deployed. `animation_url` holds more than animations, and `external_url` differs from `external_link` in [ERC-7572](./eip-7572.md), but renaming either would break existing documents.
 - No field is required, because ERC-721 requires none and deployed documents often omit fields.
-- `attributes` is an array because traits repeat, have an order, and carry display hints, and because most deployed documents already use one.
-- Unknown display types read as absent, so producers and extensions can add new ones without breaking clients. `text` is listed because more surveyed contracts use it than `string`.
+- `attributes` is an array because traits repeat, have an order, and carry display hints, and most deployed documents already use one.
+- Unknown display types read as absent, so producers and extensions can add new ones without breaking clients. `text` is accepted because more surveyed contracts use it than `string`.
 - Dates are in seconds to match `block.timestamp`. The millisecond cutoff of `1000000000000` catches every millisecond date after September 2001 and no date in seconds before the year 33000. A lower cutoff would misread `253402300800` (the year 10000), which some contracts use to mean "never expires".
-- Gateway URLs tie content to one server. 113 of the 204 surveyed token URIs written as IPFS gateway URLs failed to load. An `ipfs` URI can be fetched through any gateway or node.
+- Gateway URLs tie content to one server: 113 of the 204 surveyed token URIs written as IPFS gateway URLs failed to load. An `ipfs` URI can be fetched through any gateway or node.
+- Base64 is the recommended `data` encoding because browsers treat `#` as the start of a fragment and drop the rest of an unencoded payload, which breaks JSON that contains a `#`, such as a name like `Creature #42`. Clients still accept unencoded payloads because many deployed contracts emit them.
 - Extensions are top-level objects because clients already detect optional data by checking whether a field is present. A list of implemented proposals, like the `interop` object in [ERC-1046](./eip-1046.md), or a version field would repeat that and could disagree with it. Names begin with a letter so they are valid identifiers in GraphQL and Protocol Buffers.
-- There is no contract interface or [ERC-165](./eip-165.md) identifier, because the document already tells a client everything an interface could.
+- There is no contract interface or [ERC-165](./eip-165.md) identifier, because the document tells a client everything an interface could.
 - Attributes are display data that producers can change. Protocols that settle on a trait's value need an onchain source such as [ERC-7496](./eip-7496.md).
 
 ## Backwards Compatibility
 
-Documents that conform to the ERC-721 or ERC-1155 metadata schemas, or follow OpenSea's documented format, conform to this proposal. The forms in [Deployed forms](#deployed-forms) do not conform, but clients may still accept them.
+Documents that conform to the ERC-721 or ERC-1155 metadata schemas, or follow the 2018 format described in [Motivation](#motivation), conform to this proposal. The forms in [Deployed forms](#deployed-forms) do not conform, but clients may still accept them.
 
 ## Test Cases
 
