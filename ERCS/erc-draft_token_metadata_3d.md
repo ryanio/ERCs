@@ -7,13 +7,12 @@ status: Draft
 type: Standards Track
 category: ERC
 created: 2026-10-26
+requires: 8495
 ---
-
-<!-- Add `requires` with the Token Metadata JSON Schema's number once it has one. -->
 
 ## Abstract
 
-This proposal extends the [Token Metadata JSON Schema](./erc-draft_token_metadata_json.md) with a `model_3d` field that lists a token's 3D model files and their formats, so a client can pick the file for its task: a web viewer, AR, an avatar, or a 3D printer. `image` and `animation_url` keep a rendering and a glTF binary for clients that do not implement it.
+This proposal extends [ERC-8495](./eip-8495.md) (Token Metadata JSON Schema) with a `model_3d` field that lists a token's 3D model files and their formats, so a client can pick the file for its task: a web viewer, AR, an avatar, or a 3D printer. `image` and `animation_url` keep a rendering and a glTF binary for clients that do not implement it.
 
 ## Motivation
 
@@ -21,9 +20,9 @@ This proposal extends the [Token Metadata JSON Schema](./erc-draft_token_metadat
 
 ## Specification
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) and [RFC 8174](https://www.rfc-editor.org/rfc/rfc8174).
 
-Terms and URI rules are those of the Token Metadata JSON Schema.
+Terms and URI rules are those of ERC-8495.
 
 ### `model_3d`
 
@@ -155,7 +154,7 @@ Clients that do not implement this proposal ignore `model_3d` and show `animatio
 
 - Model parsers are complex native code with a history of memory corruption bugs. Clients should parse model files in a sandbox or with memory-safe code.
 - Compressed geometry, archives, and large textures can expand far beyond their download size. Clients should check `bytes`, enforce the real size while downloading, and limit vertex counts and texture dimensions.
-- Absolute references inside model files could reach tracking servers or internal addresses. The Specification allows only relative and `data` references, and the base proposal's fetching rules apply to every file.
+- Absolute references inside model files could reach tracking servers or internal addresses. The Specification allows only relative and `data` references, and ERC-8495's fetching rules apply to every file.
 - `model_3d`, `animation_url`, and `image` can show different models, and clients cannot verify that they match. Content-addressed URIs at least keep them from changing later.
 - Holding a token does not grant a license to use its model elsewhere. This proposal does not describe license terms.
 
