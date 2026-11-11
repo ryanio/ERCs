@@ -8,7 +8,7 @@ status: Draft
 type: Standards Track
 category: ERC
 created: 2026-10-26
-requires: 721, 1155, 4804, 4906, 6909
+requires: 721, 1155, 4804, 4906, 6909, 8493
 ---
 
 ## Abstract
@@ -31,7 +31,7 @@ A *metadata URI* is the string returned by `tokenURI(uint256)` in ERC-721 or ERC
 
 These rules apply to the metadata URI and to every URI-valued field.
 
-Clients MUST resolve `https`, `ipfs` (InterPlanetary File System), `ar` (Arweave), and `data` URIs. Clients MAY resolve other schemes, such as `ipns` or the `web3` scheme of [ERC-4804](./eip-4804.md), and MUST NOT resolve schemes that run code or read local resources, such as `javascript` or `file`.
+Clients MUST resolve `https`, `ipfs` (InterPlanetary File System), `ar` (Arweave), and `data` URIs. Clients MAY resolve other schemes, such as `ipns`, the `web3` scheme of [ERC-4804](./eip-4804.md), and the `onchain` scheme of [ERC-8493](./eip-8493.md). Clients MUST NOT resolve schemes that run code or read local resources, such as `javascript` or `file`.
 
 Producers MUST use absolute URIs, SHOULD use `ipfs`, `ar`, or `data` for content that is not meant to change, and SHOULD NOT use `http`. An `ipfs` URI MUST have the form `ipfs://<cid>`, where `<cid>` is a content identifier, with an optional path. Producers SHOULD NOT write an IPFS gateway URL in place of an `ipfs` URI. Clients MAY fetch `ipfs` and `ar` content through any gateway.
 
